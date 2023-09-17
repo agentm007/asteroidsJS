@@ -38,6 +38,8 @@ function SetupCanvas(){
     // });
     document.body.addEventListener("keydown", HandleKeyDown);
     document.body.addEventListener("keyup", HandleKeyUp);
+    //Add Start button
+    //document.body.addEventListener("start", HandleKeyUp);
 
     // Retrieves locally stored high scores
     // To Do: Change to REST call insted.
@@ -46,6 +48,8 @@ function SetupCanvas(){
     } else {
         highScore = localStorage.getItem(localStorageName);
     }
+
+
 
     Render();
 }
@@ -240,10 +244,11 @@ function CircleCollision(p1x, p1y, r1, p2x, p2y, r2){
 // Make this better current version is bad.
 // To Do: change idiots code.
 function DrawLifeShips(){
-    let startX = 1350;
+    let startX = canvasWidth-30;
     let startY = 10;
-    let points = [[9, 9], [-9, 9]];
+    let points = [[5, 8], [6, -9]];
     ctx.strokeStyle = 'white'; // Stroke color of ships
+
     // Cycle through all live ships remaining
     for(let i = 0; i < lives; i++){
         // Start drawing ship
@@ -256,7 +261,7 @@ function DrawLifeShips(){
                 startY + points[j][1]);
         }
         // Draw from last point to 1st origin point
-        ctx.closePath();
+        //ctx.closePath();
         // Stroke the ship shape white
         ctx.stroke();
         // Move next shape 30 pixels to the left
@@ -264,9 +269,9 @@ function DrawLifeShips(){
     }
 }
 
-//function to start a new level. Not used yet needs some work.
+//function to start a new level.
 function newLevel(numAsteroids, level){
-    for(let i = 0; i < 8; i++){
+    for(let i = 0; i < numAsteroids; i++){
         //Changed code prevents death on first spawn. Could run forever but probably won't
         asteroid = new Asteroid();
         asteroid.speed = 3 + (level*.5);
@@ -277,11 +282,25 @@ function newLevel(numAsteroids, level){
             i--;
         }
     }
-    level++;
+}
+
+function DisplayScore(){
+    ctx.fillStyle = 'white';
+    ctx.font = '21px Arial';
+    ctx.fillText("SCORE : " + score.toString(), 20, 35);
+}
+
+//Change this to a REST call
+function DisplayHighScore(){
+    highScore = Math.max(score, highScore);
+    localStorage.setItem(localStorageName, highScore);
+    ctx.font = '21px Arial';
+    ctx.fillText("HIGH SCORE : " + highScore.toString(), 20, 70);
 }
 
 function Render() {
     let level = 0;
+    let numAsteroids = ;
     // Check if the ship is moving forward
     ship.movingForward = (keys[87])|(keys[38]);
 
@@ -296,10 +315,7 @@ function Render() {
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    // Display score
-    ctx.fillStyle = 'white';
-    ctx.font = '21px Arial';
-    ctx.fillText("SCORE : " + score.toString(), 20, 35);
+    DisplayScore();
 
     // If no lives signal game over
     if(lives <= 0){
@@ -314,38 +330,28 @@ function Render() {
         ctx.fillText("GAME OVER", canvasWidth / 2 - 150, canvasHeight / 2);
     }
 
-    // Creates a new level and increases asteroid speed
+    // Checks to see if new level is reached
     if(asteroids.length === 0){
-        for(let i = 0; i < 8; i++){
-            //Changed code prevents death on first spawn. Could run forever but probably won't
-            asteroid = new Asteroid();
-            asteroid.speed = 3 + (level*.5);
-            if(!(CircleCollision(ship.x, ship.y, ship.radius, asteroid.x, asteroid.y, asteroid.collisionRadius*4))){
-                asteroids.push(asteroid);
-            }
-            else{
-                i--;
-            }
-        }
         level++;
+        newLevel(numAsteroids, level);
     }
 
     // Draw life ships
     DrawLifeShips();
 
     // Check for collision of ship with asteroid
-    if (asteroids.length !== 0) {
-        for(let k = 0; k < asteroids.length; k++){
-            if(CircleCollision(ship.x, ship.y, 11, asteroids[k].x, asteroids[k].y, asteroids[k].collisionRadius)){
-                ship.x = canvasWidth / 2;
-                ship.y = canvasHeight / 2;
-                ship.velX = 0;
-                ship.velY = 0;
-                lives -= 1;
-            }
+    for(let k = 0; k < asteroids.length; k++){
+        if(CircleCollision(ship.x, ship.y, 11, asteroids[k].x, asteroids[k].y, asteroids[k].collisionRadius)){
+            ship.x = canvasWidth / 2;
+            ship.y = canvasHeight / 2;
+            ship.velX = 0;
+            ship.velY = 0;
+            lives -= 1;
         }
     }
 
+
+    //Oh god I don't even know wwhere to start with this shit
     // Check for collision with bullet and asteroid
     if (asteroids.length !== 0 && bullets.length != 0){
 loop1:
@@ -393,12 +399,7 @@ loop1:
         }
     }
 
-    // Updates the high score using local storage
-    // ToDo: change this to use a REST call instead.
-    highScore = Math.max(score, highScore);
-    localStorage.setItem(localStorageName, highScore);
-    ctx.font = '21px Arial';
-    ctx.fillText("HIGH SCORE : " + highScore.toString(), 20, 70);
+    DisplayHighScore();
 
     requestAnimationFrame(Render);
 }
